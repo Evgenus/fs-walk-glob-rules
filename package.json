@@ -1,0 +1,27 @@
+{
+  "name": "fs-walk-glob-rules",
+  "version": "0.0.0",
+  "description": "Walk files using glob rules and transform paths with patterns",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Evgenus/fs-walk-glob-rules.git"
+  },
+  "keywords": [
+    "walk",
+    "filesystem",
+    "traverse",
+    "find",
+    "patterns",
+    "glob"
+  ],
+  "author": "ev_genus",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Evgenus/fs-walk-glob-rules/issues"
+  },
+  "homepage": "https://github.com/Evgenus/fs-walk-glob-rules"
+}

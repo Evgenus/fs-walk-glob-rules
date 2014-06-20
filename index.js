@@ -1,10 +1,12 @@
-var Matcher;
+var glob_rules;
 
-Matcher = (function() {
+glob_rules = require("glob-rules");
+
+module["export"].Matcher = (function() {
   var check;
 
   function Matcher(options) {
-    var pattern, test, _ref, _ref1;
+    var pattern, test, _i, _len, _ref, _ref1, _ref2;
     if (options.rules == null) {
       throw Error("Required `rules`");
     }
@@ -13,21 +15,26 @@ Matcher = (function() {
     for (test in _ref) {
       pattern = _ref[test];
       this.rules.push({
-        test: globStringToRegex(test),
-        pattern: pattern
+        test: glob_rules.tester(test),
+        transformer: glob_rules.transformer(test, pattern)
       });
     }
-    this.excludes = (_ref1 = option.exclude) != null ? _ref1 : [];
+    this.excludes = [];
+    _ref2 = (_ref1 = option.exclude) != null ? _ref1 : [];
+    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+      test = _ref2[_i];
+      this.excludes.push(glob_rules.tester(test));
+    }
     this.callback = option.callback;
-    this.dirs = [];
-    this.files = [];
+    this._dirs = [];
+    this._files = [];
   }
 
   Matcher.prototype.finished = function() {
-    if (this.dirs.length > 0) {
+    if (this._dirs.length > 0) {
       return false;
     }
-    if (this.files.length > 0) {
+    if (this._files.length > 0) {
       return false;
     }
     return true;
@@ -48,12 +55,12 @@ Matcher = (function() {
 
   Matcher.prototype.step = function() {
     var dir, f, file;
-    if (this.files.length > 0) {
-      file = this.dirs.shift();
+    if (this._files.length > 0) {
+      file = this._dirs.shift();
       f = path.join(dir, file);
     }
-    if (this.dirs.length > 0) {
-      dir = this.dirs.shift();
+    if (this._dirs.length > 0) {
+      dir = this._dirs.shift();
       fs.readdir(dir, function(err, files) {
         if (err != null) {
           return this.callback(err, null);
@@ -66,10 +73,10 @@ Matcher = (function() {
             return;
           }
           if (stat.isDirectory() && this.check(f, stat)) {
-            this.dirs.push(f);
+            this._dirs.push(f);
           }
           if (stat.isFile()) {
-            return files.push(f);
+            return this._files.push(f);
           }
         });
       });
@@ -78,7 +85,7 @@ Matcher = (function() {
   };
 
   Matcher.prototype.walk = function(dir) {
-    this.dirs.push(dir);
+    this._dirs.push(dir);
     return step();
   };
 

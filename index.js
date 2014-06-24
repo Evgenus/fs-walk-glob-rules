@@ -23,6 +23,7 @@ Walker = (function() {
         test: test,
         pattern: pattern,
         tester: glob_rules.tester(test),
+        matcher: glob_rules.matcher(test),
         transformer: glob_rules.transformer(test, pattern)
       });
     }
@@ -96,7 +97,8 @@ AsyncWalker = (function(_super) {
         if (rule.tester(file)) {
           data = {
             source: file,
-            result: rule.transformer(file)
+            result: rule.transformer(file),
+            match: rules.matcher(file)
           };
           this.callback(data, (function(_this) {
             return function() {
@@ -180,7 +182,8 @@ SyncWalker = (function(_super) {
       if (rule.tester(_path)) {
         data = {
           source: _path,
-          result: rule.transformer(_path)
+          result: rule.transformer(_path),
+          match: rule.matcher(_path)
         };
         this._files.push(data);
         break;

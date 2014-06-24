@@ -12,6 +12,7 @@ class Walker
                 test: test
                 pattern: pattern
                 tester: glob_rules.tester(test)
+                matcher: glob_rules.matcher(test)
                 transformer: glob_rules.transformer(test, pattern)
         @excludes = []
         for test in options.excludes ? []
@@ -57,6 +58,7 @@ class AsyncWalker extends Walker
                     data =
                         source: file
                         result: rule.transformer(file)
+                        match: rules.matcher(file)
                     @callback(data, => @_step())
                     return
             @_step()
@@ -100,6 +102,7 @@ class SyncWalker extends Walker
                 data =
                     source: _path
                     result: rule.transformer(_path)
+                    match: rule.matcher(_path)
                 @_files.push(data)
                 break
 

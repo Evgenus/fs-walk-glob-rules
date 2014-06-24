@@ -4,8 +4,9 @@
   "description": "Walk files using glob rules and transform paths with patterns",
   "main": "index.js",
   "scripts": {
-    "test": "mocha --require chai --compilers coffee:coffee-script/register --reporter spec"
-  },
+    "test": "mocha --require chai --compilers coffee:coffee-script/register --reporter spec",
+    "test:short": "mocha --require chai --compilers coffee:coffee-script/register --reporter tap"
+},
   "repository": {
     "type": "git",
     "url": "https://github.com/Evgenus/fs-walk-glob-rules.git"

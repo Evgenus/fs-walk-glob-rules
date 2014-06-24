@@ -2,9 +2,10 @@ fs = require("fs")
 path = require("path")
 glob_rules = require("glob-rules")
 
-class Matcher
+class Walker
     constructor: (options) ->
         throw Error("Required `rules`") unless options.rules?
+        @root = options.root
         @rules = []
         for test, pattern of options.rules
             @rules.push
@@ -15,12 +16,6 @@ class Matcher
         @excludes = []
         for test in options.exclude ? []
             @excludes.push(glob_rules.tester(test))
-        @callback = options.callback
-        @complete = options.complete
-        @error = options.error
-        @_dirs = []
-        @_files = []
-        @_paths = []
 
     finished: ->
         return false if @_dirs.length > 0
@@ -30,17 +25,29 @@ class Matcher
     normalize: (p) ->
         return './' + path.relative(".", p).split(path.sep).join('/')
 
-    step: ->
+class AsyncWalker extends Walker
+    constructor: (options) ->
+        super(options)
+
+        @callback = options.callback
+        @complete = options.complete
+        @error = options.error
+
+        @_dirs = []
+        @_files = []
+        @_paths = []
+
+    _step: ->
         if @_paths.length > 0
-            f = @_paths.shift()
-            fs.stat f, (err, stat) =>
+            _path = @_paths.shift()
+            fs.stat _path, (err, stat) =>
                 return @error(err) if err?
                 return unless stat?
                 if stat.isDirectory()
-                    @_dirs.push(f)
+                    @_dirs.push(_path)
                 if stat.isFile()
-                    @_files.push(f)
-                @step()
+                    @_files.push(_path)
+                @_step()
             return
 
         while @_files.length > 0
@@ -50,9 +57,9 @@ class Matcher
                     data =
                         source: file
                         result: rule.transformer(file)
-                    @callback(data, => @step())
+                    @callback(data, => @_step())
                     return
-            @step()
+            @_step()
             return
 
         if @_dirs.length > 0
@@ -60,22 +67,58 @@ class Matcher
             fs.readdir dir, (err, files) =>
                 return @error(err) if err?
                 files.forEach (file) =>
-                    f = @normalize(path.join(dir, file))
+                    _path = @normalize(path.join(dir, file))
                     for rule in @excludes
-                        return if rule(f)
-                    @_paths.push(f)
-                @step()
+                        return if rule(_path)
+                    @_paths.push(_path)
+                @_step()
             return
 
         @complete()
 
-    walk: (dir) ->
-        @_dirs.push(dir)
-        @step()
+    walk: ->
+        @_dirs.push(@root)
+        @_step()
+        return 
 
-exports.Matcher = Matcher
+class SyncWalker extends Walker
+    constructor: (options) ->
+        super(options)
+        @_dirs = []
+        @_files = []
 
-exports.walk = (dir, options) ->
-    matcher = new Matcher(options)
-    matcher.walk(dir)
-    return 
+    _step: (_path) ->
+        for rule in @excludes
+            return if rule(_path)
+        stat = fs.statSync(_path)
+        return unless stat?
+        if stat.isDirectory()
+            @_dirs.push(_path)
+        return unless stat.isFile()
+        for rule in @rules
+            if rule.tester(_path)
+                data =
+                    source: _path
+                    result: rule.transformer(_path)
+                @_files.push(data)
+                break
+
+    walk: ->
+        @_dirs.push(@root)
+        while @_dirs.length > 0
+            dir = @_dirs.shift()
+            for file in fs.readdirSync(dir)
+                @_step(@normalize(path.join(dir, file)))
+        return @_files
+
+exports.Walker = Walker
+exports.AsyncWalker = AsyncWalker
+exports.SyncWalker = SyncWalker
+
+exports.walk = (options) ->
+    walker = new AsyncWalker(options)
+    return walker.walk()
+
+exports.walkSync = (options) ->
+    walker = new SyncWalker(options)
+    return walker.walk()

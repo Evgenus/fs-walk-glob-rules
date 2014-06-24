@@ -27,7 +27,7 @@ Walker = (function() {
       });
     }
     this.excludes = [];
-    _ref2 = (_ref1 = options.exclude) != null ? _ref1 : [];
+    _ref2 = (_ref1 = options.excludes) != null ? _ref1 : [];
     for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
       test = _ref2[_i];
       this.excludes.push(glob_rules.tester(test));

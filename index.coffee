@@ -14,7 +14,7 @@ class Walker
                 tester: glob_rules.tester(test)
                 transformer: glob_rules.transformer(test, pattern)
         @excludes = []
-        for test in options.exclude ? []
+        for test in options.excludes ? []
             @excludes.push(glob_rules.tester(test))
 
     finished: ->

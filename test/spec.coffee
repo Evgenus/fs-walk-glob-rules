@@ -95,6 +95,29 @@ describe 'Async', ->
                 ])
                 done()
 
+    it './(a*/*.js) -> $1', (done) ->
+        walked = []
+        walker.walk
+            root: "/"
+            rules:
+                "./(a*/*.js)": "$1"
+            excludes:[
+                "./aa/**"
+            ]
+            callback: (p, next) ->
+                walked.push(p)
+                next()
+            error: (error) ->
+                expect(err).to.be.null
+            complete: () ->
+                expect(walked).to.deep.equal([
+                    {
+                        "result": "a/b.js",
+                        "source": "./a/b.js"
+                    }
+                ])
+                done()
+
 describe 'Sync', ->
     beforeEach ->
         mock(yaml.safeLoad("""
@@ -143,6 +166,21 @@ describe 'Sync', ->
             {
                 "result": "aa/c.js",
                 "source": "./aa/c.js"
+            }
+        ])
+
+    it './(a*/*.js) -> $1', ->
+        walked =  walker.walkSync
+            root: "/"
+            rules:
+                "./(a*/*.js)": "$1"
+            excludes:[
+                "./aa/**"
+            ]
+        expect(walked).to.deep.equal([
+            {
+                "result": "a/b.js",
+                "source": "./a/b.js"
             }
         ])
 

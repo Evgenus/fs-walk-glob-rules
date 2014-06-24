@@ -1,12 +1,12 @@
 {
   "name": "fs-walk-glob-rules",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Walk files using glob rules and transform paths with patterns",
   "main": "index.js",
   "scripts": {
     "test": "mocha --require chai --compilers coffee:coffee-script/register --reporter spec",
     "test:short": "mocha --require chai --compilers coffee:coffee-script/register --reporter tap"
-},
+  },
   "repository": {
     "type": "git",
     "url": "https://github.com/Evgenus/fs-walk-glob-rules.git"
@@ -33,6 +33,6 @@
     "mock-fs": "^2.3.1"
   },
   "dependencies": {
-    "glob-rules": "0.0.2"
+    "glob-rules": "0.0.3"
   }
 }

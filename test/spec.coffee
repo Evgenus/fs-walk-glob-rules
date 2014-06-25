@@ -29,6 +29,9 @@ beforeEach ->
     @old_cwd = process.cwd()
     process.chdir("/")
 
+normalize = (_path) ->
+    return _path.replace(/\//g, path.sep)
+
 describe 'transform', ->
 
     describe 'Async', ->
@@ -58,7 +61,7 @@ describe 'transform', ->
                             "./a/b.js",
                             "b.js"
                         ],
-                        "path": "\\a\\b.js",
+                        "path": normalize("/a/b.js"),
                         "relative": "./a/b.js",
                         "result": "b.js"
                     }, {
@@ -66,7 +69,7 @@ describe 'transform', ->
                             "./aa/c.js",
                             "c.js"
                         ],
-                        "path": "\\aa\\c.js",
+                        "path": normalize("/aa/c.js"),
                         "relative": "./aa/c.js",
                         "result": "c.js"
                     }, {
@@ -74,7 +77,7 @@ describe 'transform', ->
                             "./test/d.js",
                             "d.js"
                         ],
-                        "path": "\\test\\d.js",
+                        "path": normalize("/test/d.js"),
                         "relative": "./test/d.js",
                         "result": "d.js"
                     }, {
@@ -82,7 +85,7 @@ describe 'transform', ->
                             "./test/e.js",
                             "e.js"
                         ],
-                        "path": "\\test\\e.js",
+                        "path": normalize("/test/e.js"),
                         "relative": "./test/e.js",
                         "result": "e.js"
                     }])
@@ -105,7 +108,7 @@ describe 'transform', ->
                             "./a/b.js",
                             "a/b.js"
                         ],
-                        "path": "\\a\\b.js",
+                        "path": normalize("/a/b.js"),
                         "relative": "./a/b.js",
                         "result": "a/b.js"
                     }, {
@@ -113,7 +116,7 @@ describe 'transform', ->
                             "./aa/c.js",
                             "aa/c.js"
                         ],
-                        "path": "\\aa\\c.js",
+                        "path": normalize("/aa/c.js"),
                         "relative": "./aa/c.js",
                         "result": "aa/c.js"
                     }])
@@ -139,7 +142,7 @@ describe 'transform', ->
                             "./a/b.js",
                             "a/b.js"
                         ],
-                        "path": "\\a\\b.js",
+                        "path": normalize("/a/b.js"),
                         "relative": "./a/b.js",
                         "result": "a/b.js"
                     }])
@@ -166,7 +169,7 @@ describe 'transform', ->
                     "./a/b.js",
                     "b.js"
                 ],
-                "path": "\\a\\b.js",
+                "path": normalize("/a/b.js"),
                 "relative": "./a/b.js",
                 "result": "b.js"
             }, {
@@ -174,7 +177,7 @@ describe 'transform', ->
                     "./aa/c.js",
                     "c.js"
                 ],
-                "path": "\\aa\\c.js",
+                "path": normalize("/aa/c.js"),
                 "relative": "./aa/c.js",
                 "result": "c.js"
             }, {
@@ -182,7 +185,7 @@ describe 'transform', ->
                     "./test/d.js",
                     "d.js"
                 ],
-                "path": "\\test\\d.js",
+                "path": normalize("/test/d.js"),
                 "relative": "./test/d.js",
                 "result": "d.js"
             }, {
@@ -190,7 +193,7 @@ describe 'transform', ->
                     "./test/e.js",
                     "e.js"
                 ],
-                "path": "\\test\\e.js",
+                "path": normalize("/test/e.js"),
                 "relative": "./test/e.js",
                 "result": "e.js"
             }])
@@ -205,7 +208,7 @@ describe 'transform', ->
                     "./a/b.js",
                     "a/b.js"
                 ],
-                "path": "\\a\\b.js",
+                "path": normalize("/a/b.js"),
                 "relative": "./a/b.js",
                 "result": "a/b.js"
             }, {
@@ -213,7 +216,7 @@ describe 'transform', ->
                     "./aa/c.js",
                     "aa/c.js"
                 ],
-                "path": "\\aa\\c.js",
+                "path": normalize("/aa/c.js"),
                 "relative": "./aa/c.js",
                 "result": "aa/c.js"
             }])
@@ -231,7 +234,7 @@ describe 'transform', ->
                     "./a/b.js",
                     "a/b.js"
                 ],
-                "path": "\\a\\b.js",
+                "path": normalize("/a/b.js"),
                 "relative": "./a/b.js",
                 "result": "a/b.js"
             }])
@@ -259,19 +262,19 @@ describe 'walk', ->
                     expect(err).to.be.null
                 complete: () ->
                     expect(walked).to.deep.equal([{
-                        "path": "\\a.js",
+                        "path": normalize("/a.js"),
                         "relative": "./a.js"
                     }, {
-                        "path": "\\a\\b.js",
+                        "path": normalize("/a/b.js"),
                         "relative": "./a/b.js"
                     }, {
-                        "path": "\\aa\\c.js",
+                        "path": normalize("/aa/c.js"),
                         "relative": "./aa/c.js"
                     }, {
-                        "path": "\\test\\d.js",
+                        "path": normalize("/test/d.js"),
                         "relative": "./test/d.js"
                     }, {
-                        "path": "\\test\\e.js",
+                        "path": normalize("/test/e.js"),
                         "relative": "./test/e.js"
                     }])
                     done()
@@ -293,16 +296,16 @@ describe 'walk', ->
                     "./aa/**"
                 ]
             expect(walked).to.deep.equal([{
-                "path": "\\a.js",
+                "path": normalize("/a.js"),
                 "relative": "./a.js"
             }, {
-                "path": "\\a\\b.js",
+                "path": normalize("/a/b.js"),
                 "relative": "./a/b.js"
             }, {
-                "path": "\\test\\d.js",
+                "path": normalize("/test/d.js"),
                 "relative": "./test/d.js"
             }, {
-                "path": "\\test\\e.js",
+                "path": normalize("/test/e.js"),
                 "relative": "./test/e.js"
             }])
 
@@ -310,11 +313,11 @@ describe 'walk', ->
             walked =  walker.walkSync
                 root: "/test"
             expect(walked).to.deep.equal([{
-                    "path": "\\test\\d.js",
+                    "path": normalize("/test/d.js"),
                     "relative": "./d.js"
                 },
                 {
-                    "path": "\\test\\e.js",
+                    "path": normalize("/test/e.js"),
                     "relative": "./e.js"
             }])
 

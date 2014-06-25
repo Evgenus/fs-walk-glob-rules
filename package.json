@@ -33,6 +33,6 @@
     "mock-fs": "^2.3.1"
   },
   "dependencies": {
-    "glob-rules": "0.0.4"
+    "glob-rules": "0.0.5"
   }
 }

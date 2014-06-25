@@ -98,7 +98,7 @@ AsyncWalker = (function(_super) {
           data = {
             source: file,
             result: rule.transformer(file),
-            match: rules.matcher(file)
+            match: rule.matcher(file)
           };
           this.callback(data, (function(_this) {
             return function() {

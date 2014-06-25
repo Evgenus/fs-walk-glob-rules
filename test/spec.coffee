@@ -53,18 +53,22 @@ describe 'Async', ->
             complete: () ->
                 expect(walked).to.deep.equal([
                     {
+                        "match": ["./a/b.js", "b.js"],
                         "result": "b.js",
                         "source": "./a/b.js"
                     },
                     {
+                        "match": ["./aa/c.js", "c.js"],
                         "result": "c.js",
                         "source": "./aa/c.js"
                     },
                     {
+                        "match": ["./test/d.js", "d.js"],
                         "result": "d.js",
                         "source": "./test/d.js"
                     },
                     {
+                        "match": ["./test/e.js", "e.js"],
                         "result": "e.js",
                         "source": "./test/e.js"
                     }
@@ -85,10 +89,12 @@ describe 'Async', ->
             complete: () ->
                 expect(walked).to.deep.equal([
                     {
+                        "match": ["./a/b.js", "a/b.js"],
                         "result": "a/b.js",
                         "source": "./a/b.js"
                     },
                     {
+                        "match": ["./aa/c.js", "aa/c.js"],
                         "result": "aa/c.js",
                         "source": "./aa/c.js"
                     }
@@ -112,8 +118,9 @@ describe 'Async', ->
             complete: () ->
                 expect(walked).to.deep.equal([
                     {
-                        "result": "a/b.js",
-                        "source": "./a/b.js"
+                    "match": ["./a/b.js", "a/b.js"],
+                    "result": "a/b.js",
+                    "source": "./a/b.js"
                     }
                 ])
                 done()
@@ -136,18 +143,22 @@ describe 'Sync', ->
 
         expect(walked).to.deep.equal([
             {
+                "match": ["./a/b.js", "b.js"],
                 "result": "b.js",
                 "source": "./a/b.js"
             },
             {
+                "match": ["./aa/c.js", "c.js"],
                 "result": "c.js",
                 "source": "./aa/c.js"
             },
             {
+                "match": ["./test/d.js", "d.js"],
                 "result": "d.js",
                 "source": "./test/d.js"
             },
             {
+                "match": ["./test/e.js", "e.js"],
                 "result": "e.js",
                 "source": "./test/e.js"
             }
@@ -160,10 +171,12 @@ describe 'Sync', ->
                 "./(a*/*.js)": "$1"
         expect(walked).to.deep.equal([
             {
+                "match": ["./a/b.js", "a/b.js"],
                 "result": "a/b.js",
                 "source": "./a/b.js"
             },
             {
+                "match": ["./aa/c.js", "aa/c.js"],
                 "result": "aa/c.js",
                 "source": "./aa/c.js"
             }
@@ -179,6 +192,7 @@ describe 'Sync', ->
             ]
         expect(walked).to.deep.equal([
             {
+                "match": ["./a/b.js", "a/b.js"],
                 "result": "a/b.js",
                 "source": "./a/b.js"
             }

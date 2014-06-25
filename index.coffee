@@ -58,7 +58,7 @@ class AsyncWalker extends Walker
                     data =
                         source: file
                         result: rule.transformer(file)
-                        match: rules.matcher(file)
+                        match: rule.matcher(file)
                     @callback(data, => @_step())
                     return
             @_step()

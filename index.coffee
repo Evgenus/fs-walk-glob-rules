@@ -2,10 +2,32 @@ fs = require("fs")
 path = require("path")
 glob_rules = require("glob-rules")
 
-class Walker
+class AbstractMethodError extends Error
+    constructor: (name) ->
+        @name = "AbstractMethodError"
+        @message = "Calling abstract method `#{name}` detected."
+
+class BaseRules
+    _check: (_path) -> throw new AbstractMethodError("_check")
+    _process:  (_path) -> throw new AbstractMethodError("_process")
+
+class FilteringRules extends BaseRules
     constructor: (options) ->
+        @excludes = []
+        for test in options.excludes ? []
+            @excludes.push(glob_rules.tester(test))
+
+    _check: (_path) ->
+        for rule in @excludes
+            return false if rule(_path)
+        return true
+
+    _process: (_path) -> return _path
+
+class TransformRules extends FilteringRules
+    constructor: (options) ->
+        super(options)
         throw Error("Required `rules`") unless options.rules?
-        @root = options.root
         @rules = []
         for test, pattern of options.rules
             @rules.push
@@ -14,29 +36,48 @@ class Walker
                 tester: glob_rules.tester(test)
                 matcher: glob_rules.matcher(test)
                 transformer: glob_rules.transformer(test, pattern)
-        @excludes = []
-        for test in options.excludes ? []
-            @excludes.push(glob_rules.tester(test))
 
-    finished: ->
-        return false if @_dirs.length > 0
-        return false if @_files.length > 0
+    _check: (_path) ->
+        for rule in @excludes
+            return false if rule(_path)
         return true
+
+    _process: (_path) -> 
+        for rule in @rules
+            if rule.tester(_path)
+                data = 
+                    source: _path
+                    result: rule.transformer(_path)
+                    match: rule.matcher(_path)
+                return data
+
+## ========================================================================== ##
+
+class BaseWalker
+    constructor: (options) ->
+        throw Error("Required `root`") unless options.root?
+        @root = options.root
 
     normalize: (p) ->
         return './' + path.relative(".", p).split(path.sep).join('/')
 
-class AsyncWalker extends Walker
+class BaseAsync extends BaseWalker
     constructor: (options) ->
         super(options)
 
         @callback = options.callback
         @complete = options.complete
         @error = options.error
+        @rules = new @Rules(options)
 
         @_dirs = []
         @_files = []
         @_paths = []
+
+    finished: ->
+        return false if @_dirs.length > 0
+        return false if @_files.length > 0
+        return true
 
     _step: ->
         if @_paths.length > 0
@@ -52,15 +93,11 @@ class AsyncWalker extends Walker
             return
 
         while @_files.length > 0
-            file = @_files.shift()
-            for rule in @rules
-                if rule.tester(file)
-                    data =
-                        source: file
-                        result: rule.transformer(file)
-                        match: rule.matcher(file)
-                    @callback(data, => @_step())
-                    return
+            _path = @_files.shift()
+            data = @rules._process(_path)
+            if data?
+                @callback(data, => @_step())
+                return
             @_step()
             return
 
@@ -70,8 +107,7 @@ class AsyncWalker extends Walker
                 return @error(err) if err?
                 files.forEach (file) =>
                     _path = @normalize(path.join(dir, file))
-                    for rule in @excludes
-                        return if rule(_path)
+                    return unless @rules._check(_path)
                     @_paths.push(_path)
                 @_step()
             return
@@ -83,28 +119,22 @@ class AsyncWalker extends Walker
         @_step()
         return 
 
-class SyncWalker extends Walker
+class BaseSync extends BaseWalker
     constructor: (options) ->
         super(options)
+        @rules = new @Rules(options)
         @_dirs = []
         @_files = []
 
     _step: (_path) ->
-        for rule in @excludes
-            return if rule(_path)
+        return unless @rules._check(_path)
         stat = fs.statSync(_path)
         return unless stat?
         if stat.isDirectory()
             @_dirs.push(_path)
         return unless stat.isFile()
-        for rule in @rules
-            if rule.tester(_path)
-                data =
-                    source: _path
-                    result: rule.transformer(_path)
-                    match: rule.matcher(_path)
-                @_files.push(data)
-                break
+        data = @rules._process(_path)
+        @_files.push(data) if data?
 
     walk: ->
         @_dirs.push(@root)
@@ -114,9 +144,22 @@ class SyncWalker extends Walker
                 @_step(@normalize(path.join(dir, file)))
         return @_files
 
-exports.Walker = Walker
+class AsyncWalker extends BaseAsync
+    Rules: FilteringRules
+
+class SyncWalker extends BaseSync
+    Rules: FilteringRules
+
+class AsyncTransformer extends BaseAsync
+    Rules: TransformRules
+
+class SyncTransformer extends BaseSync
+    Rules: TransformRules
+
 exports.AsyncWalker = AsyncWalker
 exports.SyncWalker = SyncWalker
+exports.AsyncTransformer = AsyncTransformer
+exports.SyncTransformer = SyncTransformer
 
 exports.walk = (options) ->
     walker = new AsyncWalker(options)
@@ -125,3 +168,11 @@ exports.walk = (options) ->
 exports.walkSync = (options) ->
     walker = new SyncWalker(options)
     return walker.walk()
+
+exports.transform = (options) ->
+    transformer = new AsyncTransformer(options)
+    return transformer.walk()
+
+exports.transformSync = (options) ->
+    transformer = new SyncTransformer(options)
+    return transformer.walk()

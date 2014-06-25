@@ -29,174 +29,230 @@ beforeEach ->
     @old_cwd = process.cwd()
     process.chdir("/")
 
-describe 'Async', ->
-    beforeEach ->
-        mock(yaml.safeLoad("""
-            a.js: //empty
-            a/b.js: //empty
-            aa/c.js: //empty
-            test/d.js: //empty
-            test/e.js: //empty
-        """))
+describe 'transform', ->
 
-    it './**/(*.js) -> $1', (done) ->
-        walked = []
-        walker.walk
-            root: "/"
-            rules:
-                "./**/(*.js)": "$1"
-            callback: (p, next) ->
-                walked.push(p)
-                next()
-            error: (error) ->
-                expect(err).to.be.null
-            complete: () ->
-                expect(walked).to.deep.equal([
-                    {
-                        "match": ["./a/b.js", "b.js"],
-                        "result": "b.js",
-                        "source": "./a/b.js"
-                    },
-                    {
-                        "match": ["./aa/c.js", "c.js"],
-                        "result": "c.js",
-                        "source": "./aa/c.js"
-                    },
-                    {
-                        "match": ["./test/d.js", "d.js"],
-                        "result": "d.js",
-                        "source": "./test/d.js"
-                    },
-                    {
-                        "match": ["./test/e.js", "e.js"],
-                        "result": "e.js",
-                        "source": "./test/e.js"
-                    }
-                ])
-                done()
+    describe 'Async', ->
+        beforeEach ->
+            mock(yaml.safeLoad("""
+                a.js: //empty
+                a/b.js: //empty
+                aa/c.js: //empty
+                test/d.js: //empty
+                test/e.js: //empty
+            """))
 
-    it './(a*/*.js) -> $1', (done) ->
-        walked = []
-        walker.walk
-            root: "/"
-            rules:
-                "./(a*/*.js)": "$1"
-            callback: (p, next) ->
-                walked.push(p)
-                next()
-            error: (error) ->
-                expect(err).to.be.null
-            complete: () ->
-                expect(walked).to.deep.equal([
-                    {
+        it './**/(*.js) -> $1', (done) ->
+            walked = []
+            walker.transform
+                root: "/"
+                rules:
+                    "./**/(*.js)": "$1"
+                callback: (p, next) ->
+                    walked.push(p)
+                    next()
+                error: (error) ->
+                    expect(err).to.be.null
+                complete: () ->
+                    expect(walked).to.deep.equal([
+                        {
+                            "match": ["./a/b.js", "b.js"],
+                            "result": "b.js",
+                            "source": "./a/b.js"
+                        },
+                        {
+                            "match": ["./aa/c.js", "c.js"],
+                            "result": "c.js",
+                            "source": "./aa/c.js"
+                        },
+                        {
+                            "match": ["./test/d.js", "d.js"],
+                            "result": "d.js",
+                            "source": "./test/d.js"
+                        },
+                        {
+                            "match": ["./test/e.js", "e.js"],
+                            "result": "e.js",
+                            "source": "./test/e.js"
+                        }
+                    ])
+                    done()
+
+        it './(a*/*.js) -> $1', (done) ->
+            walked = []
+            walker.transform
+                root: "/"
+                rules:
+                    "./(a*/*.js)": "$1"
+                callback: (p, next) ->
+                    walked.push(p)
+                    next()
+                error: (error) ->
+                    expect(err).to.be.null
+                complete: () ->
+                    expect(walked).to.deep.equal([
+                        {
+                            "match": ["./a/b.js", "a/b.js"],
+                            "result": "a/b.js",
+                            "source": "./a/b.js"
+                        },
+                        {
+                            "match": ["./aa/c.js", "aa/c.js"],
+                            "result": "aa/c.js",
+                            "source": "./aa/c.js"
+                        }
+                    ])
+                    done()
+
+        it './(a*/*.js) -> $1', (done) ->
+            walked = []
+            walker.transform
+                root: "/"
+                rules:
+                    "./(a*/*.js)": "$1"
+                excludes:[
+                    "./aa/**"
+                ]
+                callback: (p, next) ->
+                    walked.push(p)
+                    next()
+                error: (error) ->
+                    expect(err).to.be.null
+                complete: () ->
+                    expect(walked).to.deep.equal([
+                        {
                         "match": ["./a/b.js", "a/b.js"],
                         "result": "a/b.js",
                         "source": "./a/b.js"
-                    },
-                    {
-                        "match": ["./aa/c.js", "aa/c.js"],
-                        "result": "aa/c.js",
-                        "source": "./aa/c.js"
-                    }
-                ])
-                done()
+                        }
+                    ])
+                    done()
 
-    it './(a*/*.js) -> $1', (done) ->
-        walked = []
-        walker.walk
-            root: "/"
-            rules:
-                "./(a*/*.js)": "$1"
-            excludes:[
-                "./aa/**"
-            ]
-            callback: (p, next) ->
-                walked.push(p)
-                next()
-            error: (error) ->
-                expect(err).to.be.null
-            complete: () ->
-                expect(walked).to.deep.equal([
-                    {
+    describe 'Sync', ->
+        beforeEach ->
+            mock(yaml.safeLoad("""
+                a.js: //empty
+                a/b.js: //empty
+                aa/c.js: //empty
+                test/d.js: //empty
+                test/e.js: //empty
+            """))
+
+        it './**/(*.js) -> $1', ->
+            walked = walker.transformSync
+                root: "/"
+                rules:
+                    "./**/(*.js)": "$1"
+
+            expect(walked).to.deep.equal([
+                {
+                    "match": ["./a/b.js", "b.js"],
+                    "result": "b.js",
+                    "source": "./a/b.js"
+                },
+                {
+                    "match": ["./aa/c.js", "c.js"],
+                    "result": "c.js",
+                    "source": "./aa/c.js"
+                },
+                {
+                    "match": ["./test/d.js", "d.js"],
+                    "result": "d.js",
+                    "source": "./test/d.js"
+                },
+                {
+                    "match": ["./test/e.js", "e.js"],
+                    "result": "e.js",
+                    "source": "./test/e.js"
+                }
+            ])
+
+        it './(a*/*.js) -> $1', ->
+            walked =  walker.transformSync
+                root: "/"
+                rules:
+                    "./(a*/*.js)": "$1"
+            expect(walked).to.deep.equal([
+                {
                     "match": ["./a/b.js", "a/b.js"],
                     "result": "a/b.js",
                     "source": "./a/b.js"
-                    }
-                ])
-                done()
+                },
+                {
+                    "match": ["./aa/c.js", "aa/c.js"],
+                    "result": "aa/c.js",
+                    "source": "./aa/c.js"
+                }
+            ])
 
-describe 'Sync', ->
-    beforeEach ->
-        mock(yaml.safeLoad("""
-            a.js: //empty
-            a/b.js: //empty
-            aa/c.js: //empty
-            test/d.js: //empty
-            test/e.js: //empty
-        """))
+        it './(a*/*.js) -> $1', ->
+            walked =  walker.transformSync
+                root: "/"
+                rules:
+                    "./(a*/*.js)": "$1"
+                excludes:[
+                    "./aa/**"
+                ]
+            expect(walked).to.deep.equal([
+                {
+                    "match": ["./a/b.js", "a/b.js"],
+                    "result": "a/b.js",
+                    "source": "./a/b.js"
+                }
+            ])
 
-    it './**/(*.js) -> $1', ->
-        walked = walker.walkSync
-            root: "/"
-            rules:
-                "./**/(*.js)": "$1"
+describe 'walk', ->
 
-        expect(walked).to.deep.equal([
-            {
-                "match": ["./a/b.js", "b.js"],
-                "result": "b.js",
-                "source": "./a/b.js"
-            },
-            {
-                "match": ["./aa/c.js", "c.js"],
-                "result": "c.js",
-                "source": "./aa/c.js"
-            },
-            {
-                "match": ["./test/d.js", "d.js"],
-                "result": "d.js",
-                "source": "./test/d.js"
-            },
-            {
-                "match": ["./test/e.js", "e.js"],
-                "result": "e.js",
-                "source": "./test/e.js"
-            }
-        ])
+    describe 'Async', ->
+        beforeEach ->
+            mock(yaml.safeLoad("""
+                a.js: //empty
+                a/b.js: //empty
+                aa/c.js: //empty
+                test/d.js: //empty
+                test/e.js: //empty
+            """))
 
-    it './(a*/*.js) -> $1', ->
-        walked =  walker.walkSync
-            root: "/"
-            rules:
-                "./(a*/*.js)": "$1"
-        expect(walked).to.deep.equal([
-            {
-                "match": ["./a/b.js", "a/b.js"],
-                "result": "a/b.js",
-                "source": "./a/b.js"
-            },
-            {
-                "match": ["./aa/c.js", "aa/c.js"],
-                "result": "aa/c.js",
-                "source": "./aa/c.js"
-            }
-        ])
+        it './**/(*.js) -> $1', (done) ->
+            walked = []
+            walker.walk
+                root: "/"
+                callback: (p, next) ->
+                    walked.push(p)
+                    next()
+                error: (error) ->
+                    expect(err).to.be.null
+                complete: () ->
+                    expect(walked).to.deep.equal([
+                        "./a.js", 
+                        "./a/b.js", 
+                        "./aa/c.js", 
+                        "./test/d.js", 
+                        "./test/e.js"
+                    ])
+                    done()
 
-    it './(a*/*.js) -> $1', ->
-        walked =  walker.walkSync
-            root: "/"
-            rules:
-                "./(a*/*.js)": "$1"
-            excludes:[
-                "./aa/**"
-            ]
-        expect(walked).to.deep.equal([
-            {
-                "match": ["./a/b.js", "a/b.js"],
-                "result": "a/b.js",
-                "source": "./a/b.js"
-            }
-        ])
+    describe 'Sync', ->
+        beforeEach ->
+            mock(yaml.safeLoad("""
+                a.js: //empty
+                a/b.js: //empty
+                aa/c.js: //empty
+                test/d.js: //empty
+                test/e.js: //empty
+            """))
+
+        it './(a*/*.js) -> $1', ->
+            walked =  walker.walkSync
+                root: "/"
+                excludes:[
+                    "./aa/**"
+                ]
+            expect(walked).to.deep.equal([
+                "./a.js",
+                "./a/b.js",
+                "./test/d.js",
+                "./test/e.js"
+            ])
 
 afterEach ->
     mock.restore()

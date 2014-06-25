@@ -12,7 +12,7 @@ This project is like [glob], but it uses [glob-rules] instead of [minimatch].
 
 ### Async
 
-`walker.walk` - asynchronous function with 3 callbacks. Single parameter is a hash of options. This function return nothing.
+`walker.transform` - asynchronous function with 3 callbacks. Single parameter is a hash of options. This function return nothing.
 * `root` - start path of walking and relativity point for paths matching.
 * `rules` - dictionary of paths transformations
 * `excludes` - list of patterns for path to be exclude. If some forder matches that path, means that all nested files and folders will be excluded, even if they will not match this pattern.
@@ -23,7 +23,7 @@ This project is like [glob], but it uses [glob-rules] instead of [minimatch].
 ### Example
 
 ```javascript
-walker.walk({
+walker.transform({
   root: "/",
   rules: {
     "./(a*/*.js)": "$1"
@@ -46,12 +46,12 @@ walker.walk({
 
 ### Sync
 
-`walker.walkSync` - synchronous function that returns list of data-objects, like ones transferred into `callback` above. Single parameter is a hash of options. Parameters `root`, `rules` and `excludes` have some meaning as above.
+`walker.transformSync` - synchronous function that returns list of data-objects, like ones transferred into `callback` above. Single parameter is a hash of options. Parameters `root`, `rules` and `excludes` have some meaning as above.
 
 ### Example
 
 ```javascript
-var walked = walker.walkSync({
+var walked = walker.transformSync({
   root: "/",
   rules: {
     "./(a*/*.js)": "$1"

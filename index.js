@@ -1,4 +1,4 @@
-var AsyncWalker, SyncWalker, Walker, fs, glob_rules, path,
+var AbstractMethodError, AsyncTransformer, AsyncWalker, BaseAsync, BaseRules, BaseSync, BaseWalker, FilteringRules, SyncTransformer, SyncWalker, TransformRules, fs, glob_rules, path,
   __hasProp = {}.hasOwnProperty,
   __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -8,13 +8,75 @@ path = require("path");
 
 glob_rules = require("glob-rules");
 
-Walker = (function() {
-  function Walker(options) {
-    var pattern, test, _i, _len, _ref, _ref1, _ref2;
+AbstractMethodError = (function(_super) {
+  __extends(AbstractMethodError, _super);
+
+  function AbstractMethodError(name) {
+    this.name = "AbstractMethodError";
+    this.message = "Calling abstract method `" + name + "` detected.";
+  }
+
+  return AbstractMethodError;
+
+})(Error);
+
+BaseRules = (function() {
+  function BaseRules() {}
+
+  BaseRules.prototype._check = function(_path) {
+    throw new AbstractMethodError("_check");
+  };
+
+  BaseRules.prototype._process = function(_path) {
+    throw new AbstractMethodError("_process");
+  };
+
+  return BaseRules;
+
+})();
+
+FilteringRules = (function(_super) {
+  __extends(FilteringRules, _super);
+
+  function FilteringRules(options) {
+    var test, _i, _len, _ref, _ref1;
+    this.excludes = [];
+    _ref1 = (_ref = options.excludes) != null ? _ref : [];
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      test = _ref1[_i];
+      this.excludes.push(glob_rules.tester(test));
+    }
+  }
+
+  FilteringRules.prototype._check = function(_path) {
+    var rule, _i, _len, _ref;
+    _ref = this.excludes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      rule = _ref[_i];
+      if (rule(_path)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  FilteringRules.prototype._process = function(_path) {
+    return _path;
+  };
+
+  return FilteringRules;
+
+})(BaseRules);
+
+TransformRules = (function(_super) {
+  __extends(TransformRules, _super);
+
+  function TransformRules(options) {
+    var pattern, test, _ref;
+    TransformRules.__super__.constructor.call(this, options);
     if (options.rules == null) {
       throw Error("Required `rules`");
     }
-    this.root = options.root;
     this.rules = [];
     _ref = options.rules;
     for (test in _ref) {
@@ -27,15 +89,71 @@ Walker = (function() {
         transformer: glob_rules.transformer(test, pattern)
       });
     }
-    this.excludes = [];
-    _ref2 = (_ref1 = options.excludes) != null ? _ref1 : [];
-    for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-      test = _ref2[_i];
-      this.excludes.push(glob_rules.tester(test));
-    }
   }
 
-  Walker.prototype.finished = function() {
+  TransformRules.prototype._check = function(_path) {
+    var rule, _i, _len, _ref;
+    _ref = this.excludes;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      rule = _ref[_i];
+      if (rule(_path)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  TransformRules.prototype._process = function(_path) {
+    var data, rule, _i, _len, _ref;
+    _ref = this.rules;
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      rule = _ref[_i];
+      if (rule.tester(_path)) {
+        data = {
+          source: _path,
+          result: rule.transformer(_path),
+          match: rule.matcher(_path)
+        };
+        return data;
+      }
+    }
+  };
+
+  return TransformRules;
+
+})(FilteringRules);
+
+BaseWalker = (function() {
+  function BaseWalker(options) {
+    if (options.root == null) {
+      throw Error("Required `root`");
+    }
+    this.root = options.root;
+  }
+
+  BaseWalker.prototype.normalize = function(p) {
+    return './' + path.relative(".", p).split(path.sep).join('/');
+  };
+
+  return BaseWalker;
+
+})();
+
+BaseAsync = (function(_super) {
+  __extends(BaseAsync, _super);
+
+  function BaseAsync(options) {
+    BaseAsync.__super__.constructor.call(this, options);
+    this.callback = options.callback;
+    this.complete = options.complete;
+    this.error = options.error;
+    this.rules = new this.Rules(options);
+    this._dirs = [];
+    this._files = [];
+    this._paths = [];
+  }
+
+  BaseAsync.prototype.finished = function() {
     if (this._dirs.length > 0) {
       return false;
     }
@@ -45,29 +163,8 @@ Walker = (function() {
     return true;
   };
 
-  Walker.prototype.normalize = function(p) {
-    return './' + path.relative(".", p).split(path.sep).join('/');
-  };
-
-  return Walker;
-
-})();
-
-AsyncWalker = (function(_super) {
-  __extends(AsyncWalker, _super);
-
-  function AsyncWalker(options) {
-    AsyncWalker.__super__.constructor.call(this, options);
-    this.callback = options.callback;
-    this.complete = options.complete;
-    this.error = options.error;
-    this._dirs = [];
-    this._files = [];
-    this._paths = [];
-  }
-
-  AsyncWalker.prototype._step = function() {
-    var data, dir, file, rule, _i, _len, _path, _ref;
+  BaseAsync.prototype._step = function() {
+    var data, dir, _path;
     if (this._paths.length > 0) {
       _path = this._paths.shift();
       fs.stat(_path, (function(_this) {
@@ -90,23 +187,15 @@ AsyncWalker = (function(_super) {
       return;
     }
     while (this._files.length > 0) {
-      file = this._files.shift();
-      _ref = this.rules;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        rule = _ref[_i];
-        if (rule.tester(file)) {
-          data = {
-            source: file,
-            result: rule.transformer(file),
-            match: rule.matcher(file)
+      _path = this._files.shift();
+      data = this.rules._process(_path);
+      if (data != null) {
+        this.callback(data, (function(_this) {
+          return function() {
+            return _this._step();
           };
-          this.callback(data, (function(_this) {
-            return function() {
-              return _this._step();
-            };
-          })(this));
-          return;
-        }
+        })(this));
+        return;
       }
       this._step();
       return;
@@ -119,14 +208,9 @@ AsyncWalker = (function(_super) {
             return _this.error(err);
           }
           files.forEach(function(file) {
-            var _j, _len1, _ref1;
             _path = _this.normalize(path.join(dir, file));
-            _ref1 = _this.excludes;
-            for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-              rule = _ref1[_j];
-              if (rule(_path)) {
-                return;
-              }
+            if (!_this.rules._check(_path)) {
+              return;
             }
             return _this._paths.push(_path);
           });
@@ -138,32 +222,29 @@ AsyncWalker = (function(_super) {
     return this.complete();
   };
 
-  AsyncWalker.prototype.walk = function() {
+  BaseAsync.prototype.walk = function() {
     this._dirs.push(this.root);
     this._step();
   };
 
-  return AsyncWalker;
+  return BaseAsync;
 
-})(Walker);
+})(BaseWalker);
 
-SyncWalker = (function(_super) {
-  __extends(SyncWalker, _super);
+BaseSync = (function(_super) {
+  __extends(BaseSync, _super);
 
-  function SyncWalker(options) {
-    SyncWalker.__super__.constructor.call(this, options);
+  function BaseSync(options) {
+    BaseSync.__super__.constructor.call(this, options);
+    this.rules = new this.Rules(options);
     this._dirs = [];
     this._files = [];
   }
 
-  SyncWalker.prototype._step = function(_path) {
-    var data, rule, stat, _i, _j, _len, _len1, _ref, _ref1, _results;
-    _ref = this.excludes;
-    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      rule = _ref[_i];
-      if (rule(_path)) {
-        return;
-      }
+  BaseSync.prototype._step = function(_path) {
+    var data, stat;
+    if (!this.rules._check(_path)) {
+      return;
     }
     stat = fs.statSync(_path);
     if (stat == null) {
@@ -175,26 +256,13 @@ SyncWalker = (function(_super) {
     if (!stat.isFile()) {
       return;
     }
-    _ref1 = this.rules;
-    _results = [];
-    for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-      rule = _ref1[_j];
-      if (rule.tester(_path)) {
-        data = {
-          source: _path,
-          result: rule.transformer(_path),
-          match: rule.matcher(_path)
-        };
-        this._files.push(data);
-        break;
-      } else {
-        _results.push(void 0);
-      }
+    data = this.rules._process(_path);
+    if (data != null) {
+      return this._files.push(data);
     }
-    return _results;
   };
 
-  SyncWalker.prototype.walk = function() {
+  BaseSync.prototype.walk = function() {
     var dir, file, _i, _len, _ref;
     this._dirs.push(this.root);
     while (this._dirs.length > 0) {
@@ -208,15 +276,69 @@ SyncWalker = (function(_super) {
     return this._files;
   };
 
+  return BaseSync;
+
+})(BaseWalker);
+
+AsyncWalker = (function(_super) {
+  __extends(AsyncWalker, _super);
+
+  function AsyncWalker() {
+    return AsyncWalker.__super__.constructor.apply(this, arguments);
+  }
+
+  AsyncWalker.prototype.Rules = FilteringRules;
+
+  return AsyncWalker;
+
+})(BaseAsync);
+
+SyncWalker = (function(_super) {
+  __extends(SyncWalker, _super);
+
+  function SyncWalker() {
+    return SyncWalker.__super__.constructor.apply(this, arguments);
+  }
+
+  SyncWalker.prototype.Rules = FilteringRules;
+
   return SyncWalker;
 
-})(Walker);
+})(BaseSync);
 
-exports.Walker = Walker;
+AsyncTransformer = (function(_super) {
+  __extends(AsyncTransformer, _super);
+
+  function AsyncTransformer() {
+    return AsyncTransformer.__super__.constructor.apply(this, arguments);
+  }
+
+  AsyncTransformer.prototype.Rules = TransformRules;
+
+  return AsyncTransformer;
+
+})(BaseAsync);
+
+SyncTransformer = (function(_super) {
+  __extends(SyncTransformer, _super);
+
+  function SyncTransformer() {
+    return SyncTransformer.__super__.constructor.apply(this, arguments);
+  }
+
+  SyncTransformer.prototype.Rules = TransformRules;
+
+  return SyncTransformer;
+
+})(BaseSync);
 
 exports.AsyncWalker = AsyncWalker;
 
 exports.SyncWalker = SyncWalker;
+
+exports.AsyncTransformer = AsyncTransformer;
+
+exports.SyncTransformer = SyncTransformer;
 
 exports.walk = function(options) {
   var walker;
@@ -228,4 +350,16 @@ exports.walkSync = function(options) {
   var walker;
   walker = new SyncWalker(options);
   return walker.walk();
+};
+
+exports.transform = function(options) {
+  var transformer;
+  transformer = new AsyncTransformer(options);
+  return transformer.walk();
+};
+
+exports.transformSync = function(options) {
+  var transformer;
+  transformer = new SyncTransformer(options);
+  return transformer.walk();
 };

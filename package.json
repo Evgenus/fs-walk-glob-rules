@@ -1,6 +1,6 @@
 {
   "name": "fs-walk-glob-rules",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Walk files using glob rules and transform paths with patterns",
   "main": "index.js",
   "scripts": {

@@ -64,7 +64,7 @@ class BaseWalker
         @root = options.root
 
     normalize: (p) ->
-        return './' + path.relative(".", p).split(path.sep).join('/')
+        return './' + path.relative(@root, p).split(path.sep).join('/')
 
 class BaseAsync extends BaseWalker
     constructor: (options) ->

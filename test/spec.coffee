@@ -306,6 +306,18 @@ describe 'walk', ->
                 "relative": "./test/e.js"
             }])
 
+        it './(a*/*.js) -> $1', ->
+            walked =  walker.walkSync
+                root: "/test"
+            expect(walked).to.deep.equal([{
+                    "path": "\\test\\d.js",
+                    "relative": "./d.js"
+                },
+                {
+                    "path": "\\test\\e.js",
+                    "relative": "./e.js"
+            }])
+
 afterEach ->
     mock.restore()
     process.chdir(@old_cwd)

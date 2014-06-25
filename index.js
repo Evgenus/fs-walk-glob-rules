@@ -138,7 +138,7 @@ BaseWalker = (function() {
   }
 
   BaseWalker.prototype.normalize = function(p) {
-    return './' + path.relative(".", p).split(path.sep).join('/');
+    return './' + path.relative(this.root, p).split(path.sep).join('/');
   };
 
   return BaseWalker;

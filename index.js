@@ -27,7 +27,7 @@ BaseRules = (function() {
     throw new AbstractMethodError("_check");
   };
 
-  BaseRules.prototype._process = function(_path) {
+  BaseRules.prototype._process = function(_path, _normalized) {
     throw new AbstractMethodError("_process");
   };
 
@@ -60,8 +60,13 @@ FilteringRules = (function(_super) {
     return true;
   };
 
-  FilteringRules.prototype._process = function(_path) {
-    return _path;
+  FilteringRules.prototype._process = function(_path, _normalized) {
+    var data;
+    data = {
+      path: _path,
+      relative: _normalized
+    };
+    return data;
   };
 
   return FilteringRules;
@@ -103,16 +108,17 @@ TransformRules = (function(_super) {
     return true;
   };
 
-  TransformRules.prototype._process = function(_path) {
+  TransformRules.prototype._process = function(_path, _normalized) {
     var data, rule, _i, _len, _ref;
     _ref = this.rules;
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
       rule = _ref[_i];
-      if (rule.tester(_path)) {
+      if (rule.tester(_normalized)) {
         data = {
-          source: _path,
-          result: rule.transformer(_path),
-          match: rule.matcher(_path)
+          path: _path,
+          relative: _normalized,
+          result: rule.transformer(_normalized),
+          match: rule.matcher(_normalized)
         };
         return data;
       }
@@ -164,7 +170,7 @@ BaseAsync = (function(_super) {
   };
 
   BaseAsync.prototype._step = function() {
-    var data, dir, _path;
+    var data, dir, _normalized, _path;
     if (this._paths.length > 0) {
       _path = this._paths.shift();
       fs.stat(_path, (function(_this) {
@@ -188,7 +194,8 @@ BaseAsync = (function(_super) {
     }
     while (this._files.length > 0) {
       _path = this._files.shift();
-      data = this.rules._process(_path);
+      _normalized = this.normalize(_path);
+      data = this.rules._process(_path, _normalized);
       if (data != null) {
         this.callback(data, (function(_this) {
           return function() {
@@ -208,8 +215,9 @@ BaseAsync = (function(_super) {
             return _this.error(err);
           }
           files.forEach(function(file) {
-            _path = _this.normalize(path.join(dir, file));
-            if (!_this.rules._check(_path)) {
+            _path = path.join(dir, file);
+            _normalized = _this.normalize(_path);
+            if (!_this.rules._check(_normalized)) {
               return;
             }
             return _this._paths.push(_path);
@@ -242,8 +250,9 @@ BaseSync = (function(_super) {
   }
 
   BaseSync.prototype._step = function(_path) {
-    var data, stat;
-    if (!this.rules._check(_path)) {
+    var data, stat, _normalize;
+    _normalize = this.normalize(_path);
+    if (!this.rules._check(_normalize)) {
       return;
     }
     stat = fs.statSync(_path);
@@ -256,21 +265,22 @@ BaseSync = (function(_super) {
     if (!stat.isFile()) {
       return;
     }
-    data = this.rules._process(_path);
+    data = this.rules._process(_path, _normalize);
     if (data != null) {
       return this._files.push(data);
     }
   };
 
   BaseSync.prototype.walk = function() {
-    var dir, file, _i, _len, _ref;
+    var dir, file, _i, _len, _path, _ref;
     this._dirs.push(this.root);
     while (this._dirs.length > 0) {
       dir = this._dirs.shift();
       _ref = fs.readdirSync(dir);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         file = _ref[_i];
-        this._step(this.normalize(path.join(dir, file)));
+        _path = path.join(dir, file);
+        this._step(_path);
       }
     }
     return this._files;

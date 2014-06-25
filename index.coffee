@@ -9,7 +9,7 @@ class AbstractMethodError extends Error
 
 class BaseRules
     _check: (_path) -> throw new AbstractMethodError("_check")
-    _process:  (_path) -> throw new AbstractMethodError("_process")
+    _process:  (_path, _normalized) -> throw new AbstractMethodError("_process")
 
 class FilteringRules extends BaseRules
     constructor: (options) ->
@@ -22,7 +22,11 @@ class FilteringRules extends BaseRules
             return false if rule(_path)
         return true
 
-    _process: (_path) -> return _path
+    _process: (_path, _normalized) ->
+        data = 
+            path: _path
+            relative: _normalized
+        return data
 
 class TransformRules extends FilteringRules
     constructor: (options) ->
@@ -42,13 +46,14 @@ class TransformRules extends FilteringRules
             return false if rule(_path)
         return true
 
-    _process: (_path) -> 
+    _process: (_path, _normalized) -> 
         for rule in @rules
-            if rule.tester(_path)
+            if rule.tester(_normalized)
                 data = 
-                    source: _path
-                    result: rule.transformer(_path)
-                    match: rule.matcher(_path)
+                    path: _path
+                    relative: _normalized
+                    result: rule.transformer(_normalized)
+                    match: rule.matcher(_normalized)
                 return data
 
 ## ========================================================================== ##
@@ -94,7 +99,8 @@ class BaseAsync extends BaseWalker
 
         while @_files.length > 0
             _path = @_files.shift()
-            data = @rules._process(_path)
+            _normalized = @normalize(_path)
+            data = @rules._process(_path, _normalized)
             if data?
                 @callback(data, => @_step())
                 return
@@ -106,8 +112,9 @@ class BaseAsync extends BaseWalker
             fs.readdir dir, (err, files) =>
                 return @error(err) if err?
                 files.forEach (file) =>
-                    _path = @normalize(path.join(dir, file))
-                    return unless @rules._check(_path)
+                    _path = path.join(dir, file)
+                    _normalized = @normalize(_path)
+                    return unless @rules._check(_normalized)
                     @_paths.push(_path)
                 @_step()
             return
@@ -127,13 +134,14 @@ class BaseSync extends BaseWalker
         @_files = []
 
     _step: (_path) ->
-        return unless @rules._check(_path)
+        _normalize = @normalize(_path)
+        return unless @rules._check(_normalize)
         stat = fs.statSync(_path)
         return unless stat?
         if stat.isDirectory()
             @_dirs.push(_path)
         return unless stat.isFile()
-        data = @rules._process(_path)
+        data = @rules._process(_path, _normalize)
         @_files.push(data) if data?
 
     walk: ->
@@ -141,7 +149,8 @@ class BaseSync extends BaseWalker
         while @_dirs.length > 0
             dir = @_dirs.shift()
             for file in fs.readdirSync(dir)
-                @_step(@normalize(path.join(dir, file)))
+                _path = path.join(dir, file)
+                @_step(_path)
         return @_files
 
 class AsyncWalker extends BaseAsync

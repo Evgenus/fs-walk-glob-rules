@@ -53,28 +53,39 @@ describe 'transform', ->
                 error: (error) ->
                     expect(err).to.be.null
                 complete: () ->
-                    expect(walked).to.deep.equal([
-                        {
-                            "match": ["./a/b.js", "b.js"],
-                            "result": "b.js",
-                            "source": "./a/b.js"
-                        },
-                        {
-                            "match": ["./aa/c.js", "c.js"],
-                            "result": "c.js",
-                            "source": "./aa/c.js"
-                        },
-                        {
-                            "match": ["./test/d.js", "d.js"],
-                            "result": "d.js",
-                            "source": "./test/d.js"
-                        },
-                        {
-                            "match": ["./test/e.js", "e.js"],
-                            "result": "e.js",
-                            "source": "./test/e.js"
-                        }
-                    ])
+                    expect(walked).to.deep.equal([{
+                        "match": [
+                            "./a/b.js",
+                            "b.js"
+                        ],
+                        "path": "\\a\\b.js",
+                        "relative": "./a/b.js",
+                        "result": "b.js"
+                    }, {
+                        "match": [
+                            "./aa/c.js",
+                            "c.js"
+                        ],
+                        "path": "\\aa\\c.js",
+                        "relative": "./aa/c.js",
+                        "result": "c.js"
+                    }, {
+                        "match": [
+                            "./test/d.js",
+                            "d.js"
+                        ],
+                        "path": "\\test\\d.js",
+                        "relative": "./test/d.js",
+                        "result": "d.js"
+                    }, {
+                        "match": [
+                            "./test/e.js",
+                            "e.js"
+                        ],
+                        "path": "\\test\\e.js",
+                        "relative": "./test/e.js",
+                        "result": "e.js"
+                    }])
                     done()
 
         it './(a*/*.js) -> $1', (done) ->
@@ -89,18 +100,23 @@ describe 'transform', ->
                 error: (error) ->
                     expect(err).to.be.null
                 complete: () ->
-                    expect(walked).to.deep.equal([
-                        {
-                            "match": ["./a/b.js", "a/b.js"],
-                            "result": "a/b.js",
-                            "source": "./a/b.js"
-                        },
-                        {
-                            "match": ["./aa/c.js", "aa/c.js"],
-                            "result": "aa/c.js",
-                            "source": "./aa/c.js"
-                        }
-                    ])
+                    expect(walked).to.deep.equal([{
+                        "match": [
+                            "./a/b.js",
+                            "a/b.js"
+                        ],
+                        "path": "\\a\\b.js",
+                        "relative": "./a/b.js",
+                        "result": "a/b.js"
+                    }, {
+                        "match": [
+                            "./aa/c.js",
+                            "aa/c.js"
+                        ],
+                        "path": "\\aa\\c.js",
+                        "relative": "./aa/c.js",
+                        "result": "aa/c.js"
+                    }])
                     done()
 
         it './(a*/*.js) -> $1', (done) ->
@@ -118,13 +134,15 @@ describe 'transform', ->
                 error: (error) ->
                     expect(err).to.be.null
                 complete: () ->
-                    expect(walked).to.deep.equal([
-                        {
-                        "match": ["./a/b.js", "a/b.js"],
-                        "result": "a/b.js",
-                        "source": "./a/b.js"
-                        }
-                    ])
+                    expect(walked).to.deep.equal([{
+                        "match": [
+                            "./a/b.js",
+                            "a/b.js"
+                        ],
+                        "path": "\\a\\b.js",
+                        "relative": "./a/b.js",
+                        "result": "a/b.js"
+                    }])
                     done()
 
     describe 'Sync', ->
@@ -143,46 +161,62 @@ describe 'transform', ->
                 rules:
                     "./**/(*.js)": "$1"
 
-            expect(walked).to.deep.equal([
-                {
-                    "match": ["./a/b.js", "b.js"],
-                    "result": "b.js",
-                    "source": "./a/b.js"
-                },
-                {
-                    "match": ["./aa/c.js", "c.js"],
-                    "result": "c.js",
-                    "source": "./aa/c.js"
-                },
-                {
-                    "match": ["./test/d.js", "d.js"],
-                    "result": "d.js",
-                    "source": "./test/d.js"
-                },
-                {
-                    "match": ["./test/e.js", "e.js"],
-                    "result": "e.js",
-                    "source": "./test/e.js"
-                }
-            ])
+            expect(walked).to.deep.equal([{
+                "match": [
+                    "./a/b.js",
+                    "b.js"
+                ],
+                "path": "\\a\\b.js",
+                "relative": "./a/b.js",
+                "result": "b.js"
+            }, {
+                "match": [
+                    "./aa/c.js",
+                    "c.js"
+                ],
+                "path": "\\aa\\c.js",
+                "relative": "./aa/c.js",
+                "result": "c.js"
+            }, {
+                "match": [
+                    "./test/d.js",
+                    "d.js"
+                ],
+                "path": "\\test\\d.js",
+                "relative": "./test/d.js",
+                "result": "d.js"
+            }, {
+                "match": [
+                    "./test/e.js",
+                    "e.js"
+                ],
+                "path": "\\test\\e.js",
+                "relative": "./test/e.js",
+                "result": "e.js"
+            }])
 
         it './(a*/*.js) -> $1', ->
             walked =  walker.transformSync
                 root: "/"
                 rules:
                     "./(a*/*.js)": "$1"
-            expect(walked).to.deep.equal([
-                {
-                    "match": ["./a/b.js", "a/b.js"],
-                    "result": "a/b.js",
-                    "source": "./a/b.js"
-                },
-                {
-                    "match": ["./aa/c.js", "aa/c.js"],
-                    "result": "aa/c.js",
-                    "source": "./aa/c.js"
-                }
-            ])
+            expect(walked).to.deep.equal([{
+                "match": [
+                    "./a/b.js",
+                    "a/b.js"
+                ],
+                "path": "\\a\\b.js",
+                "relative": "./a/b.js",
+                "result": "a/b.js"
+            }, {
+                "match": [
+                    "./aa/c.js",
+                    "aa/c.js"
+                ],
+                "path": "\\aa\\c.js",
+                "relative": "./aa/c.js",
+                "result": "aa/c.js"
+            }])
 
         it './(a*/*.js) -> $1', ->
             walked =  walker.transformSync
@@ -192,13 +226,15 @@ describe 'transform', ->
                 excludes:[
                     "./aa/**"
                 ]
-            expect(walked).to.deep.equal([
-                {
-                    "match": ["./a/b.js", "a/b.js"],
-                    "result": "a/b.js",
-                    "source": "./a/b.js"
-                }
-            ])
+            expect(walked).to.deep.equal([{
+                "match": [
+                    "./a/b.js",
+                    "a/b.js"
+                ],
+                "path": "\\a\\b.js",
+                "relative": "./a/b.js",
+                "result": "a/b.js"
+            }])
 
 describe 'walk', ->
 
@@ -222,13 +258,22 @@ describe 'walk', ->
                 error: (error) ->
                     expect(err).to.be.null
                 complete: () ->
-                    expect(walked).to.deep.equal([
-                        "./a.js", 
-                        "./a/b.js", 
-                        "./aa/c.js", 
-                        "./test/d.js", 
-                        "./test/e.js"
-                    ])
+                    expect(walked).to.deep.equal([{
+                        "path": "\\a.js",
+                        "relative": "./a.js"
+                    }, {
+                        "path": "\\a\\b.js",
+                        "relative": "./a/b.js"
+                    }, {
+                        "path": "\\aa\\c.js",
+                        "relative": "./aa/c.js"
+                    }, {
+                        "path": "\\test\\d.js",
+                        "relative": "./test/d.js"
+                    }, {
+                        "path": "\\test\\e.js",
+                        "relative": "./test/e.js"
+                    }])
                     done()
 
     describe 'Sync', ->
@@ -247,12 +292,19 @@ describe 'walk', ->
                 excludes:[
                     "./aa/**"
                 ]
-            expect(walked).to.deep.equal([
-                "./a.js",
-                "./a/b.js",
-                "./test/d.js",
-                "./test/e.js"
-            ])
+            expect(walked).to.deep.equal([{
+                "path": "\\a.js",
+                "relative": "./a.js"
+            }, {
+                "path": "\\a\\b.js",
+                "relative": "./a/b.js"
+            }, {
+                "path": "\\test\\d.js",
+                "relative": "./test/d.js"
+            }, {
+                "path": "\\test\\e.js",
+                "relative": "./test/e.js"
+            }])
 
 afterEach ->
     mock.restore()

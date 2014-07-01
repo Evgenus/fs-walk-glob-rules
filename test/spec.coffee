@@ -58,6 +58,14 @@ describe 'transform', ->
                 complete: () ->
                     expect(walked).to.deep.equal([{
                         "match": [
+                            "./a.js",
+                            "a.js"
+                        ],
+                        "path": normalize("/a.js"),
+                        "relative": "./a.js",
+                        "result": "a.js"
+                    }, {
+                        "match": [
                             "./a/b.js",
                             "b.js"
                         ],
@@ -166,6 +174,14 @@ describe 'transform', ->
 
             expect(walked).to.deep.equal([{
                 "match": [
+                    "./a.js",
+                    "a.js"
+                ],
+                "path": normalize("/a.js"),
+                "relative": "./a.js",
+                "result": "a.js"
+            }, {
+                "match": [
                     "./a/b.js",
                     "b.js"
                 ],
@@ -251,7 +267,7 @@ describe 'walk', ->
                 test/e.js: //empty
             """))
 
-        it './**/(*.js) -> $1', (done) ->
+        it 'All', (done) ->
             walked = []
             walker.walk
                 root: "/"
@@ -289,7 +305,7 @@ describe 'walk', ->
                 test/e.js: //empty
             """))
 
-        it './(a*/*.js) -> $1', ->
+        it 'All', ->
             walked =  walker.walkSync
                 root: "/"
                 excludes:[
@@ -309,7 +325,7 @@ describe 'walk', ->
                 "relative": "./test/e.js"
             }])
 
-        it './(a*/*.js) -> $1', ->
+        it './test', ->
             walked =  walker.walkSync
                 root: "/test"
             expect(walked).to.deep.equal([{
